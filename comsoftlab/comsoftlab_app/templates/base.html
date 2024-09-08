@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Мой сайт{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'comsoftlab_app/css/styles.css' %}">
+<!--    <script src="{% static 'comsoftlab_app/js/scripts.js' %}"></script>-->
+
 </head>
 <body>
 <header>
