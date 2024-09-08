@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}login{% endblock %}
+
+{% block content %}
+{% if is_credentials_wrong == True %}
+<h3>Wrong credentials :(</h3>
+{% endif %}
+
+<h2>Вход</h2>
+<form method="post">
+    {% csrf_token %}
+    <input type="text" name="username" placeholder="Логин" required>
+    <input type="password" name="password" placeholder="Пароль" required>
+    <button type="submit">Войти</button>
+</form>
+
+{% endblock %}
