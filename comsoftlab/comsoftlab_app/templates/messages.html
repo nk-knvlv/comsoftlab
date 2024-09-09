@@ -4,28 +4,32 @@
 
 {% block content %}
 
-<div class="container">
-  <input type="radio" class="radio" name="progress" value="five" id="five">
-  <label for="five" class="label">5%</label>
+{% if not is_mail_credentials %}
 
-  <input type="radio" class="radio" name="progress" value="twentyfive" id="twentyfive" checked>
-  <label for="twentyfive" class="label">25%</label>
+<form method="post" action="/comsoftlab_app/mail/" id="login-form">
+    {% csrf_token %}
+    {% if is_mail_credentials_wrong == 'True' %}
+        <div class="wrong-credentials">
+            Неверные данные почты
+        </div>
+    {% endif %}
 
-  <input type="radio" class="radio" name="progress" value="fifty" id="fifty">
-  <label for="fifty" class="label">50%</label>
+    <div class="form-group">
+        <label for="mail">Электронная почта</label>
+        <input class="mail" type="email" id="mail" name="email" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Пароль</label>
+        <input class="mail" type="password" id="password" name="password" required>
+    </div>
+    <button type="submit" class="btn">Войти</button>
+</form>
+{% else %}
 
-  <input type="radio" class="radio" name="progress" value="seventyfive" id="seventyfive">
-  <label for="seventyfive" class="label">75%</label>
 
-  <input type="radio" class="radio" name="progress" value="onehundred" id="onehundred">
-  <label for="onehundred" class="label">100%</label>
-
-  <div class="progress">
-    <div class="progress-bar"></div>
-  </div>
+<div class="progress fade">
+  <div class="progress-value"></div>
 </div>
-
-
 
  <h1>Список объектов</h1>
  <h1>Количество сообщений: {{ messages_count }}</h1>
@@ -54,4 +58,6 @@
             {% endfor %}
         </tbody>
     </table>
+{% endif %}
+
 {% endblock %}

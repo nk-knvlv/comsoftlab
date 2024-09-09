@@ -15,7 +15,6 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -27,10 +26,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -55,7 +55,7 @@ ROOT_URLCONF = 'comsoftlab.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(Path(BASE_DIR) / 'templates')],   # путь к папке templates
+        'DIRS': [str(Path(BASE_DIR) / 'templates')],  # путь к папке templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -68,9 +68,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'comsoftlab.wsgi.application'
-
-
+ASGI_APPLICATION = 'comsoftlab.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -78,13 +76,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'comsoftlab_db',  # Имя вашей базы данных
-        'USER': 'postgres',        # Ваше имя пользователя PostgreSQL
-        'PASSWORD': 'postgres',    # Пароль пользователя
-        'HOST': 'localhost',            # Адрес сервера (обычно localhost)
+        'USER': 'postgres',  # Ваше имя пользователя PostgreSQL
+        'PASSWORD': 'postgres',  # Пароль пользователя
+        'HOST': 'localhost',  # Адрес сервера (обычно localhost)
         'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -104,7 +101,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -116,18 +112,27 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Если у вас есть общая папка для статиков
+    str(Path(BASE_DIR) / 'static'),  # Для глобального стилей
 ]
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CHANNELS_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
+
+MAIL_SERVICE_CONF = {
+    'mail_pass': "MPenUT0nfBBfsduvzvHB",
+    'imap_server': 'imap.mail.ru',
+}
+

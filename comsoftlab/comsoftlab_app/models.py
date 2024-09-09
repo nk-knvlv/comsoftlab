@@ -13,3 +13,13 @@ class Message(models.Model):
     # files_list = тут пока не понятно TODO
     def __str__(self):
         return self.title
+
+
+class Mail(models.Model):
+    mail = models.CharField(max_length=255, blank=False)
+    password = models.CharField(max_length=255, blank=False)
+    type = models.CharField(max_length=255, blank=False)
+    last_message_id = models.CharField(max_length=255, blank=False)
+
+    def __str__(self):
+        return self.mail
