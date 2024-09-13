@@ -1,4 +1,6 @@
 from channels.consumer import AsyncConsumer
+from .services.front_messages_service import FrontMessagesService
+import json
 
 
 class YourConsumer(AsyncConsumer):
@@ -12,8 +14,9 @@ class YourConsumer(AsyncConsumer):
     async def websocket_receive(self, data):
         await self.send({
             "type": "websocket.send",
-            "text": f'Hello from Django socket - {data['message']}'
+            "text": data
         })
+        # await FrontMessagesService.process_message(data['messageType'], self)
 
     async def websocket_disconnect(self, event):
         pass
@@ -23,4 +26,3 @@ class YourConsumer(AsyncConsumer):
             "type": "websocket.send",
             "text": text_data
         })
-

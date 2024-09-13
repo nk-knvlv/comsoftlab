@@ -1,30 +1,10 @@
 {% extends "base.html" %}
 
+{% load static %}
+
 {% block title %}messages{% endblock %}
 
 {% block content %}
-
-{% if not is_mail_credentials %}
-
-<form method="post" action="/comsoftlab_app/mail/" id="login-form">
-    {% csrf_token %}
-    {% if is_mail_credentials_wrong == 'True' %}
-        <div class="wrong-credentials">
-            Неверные данные почты
-        </div>
-    {% endif %}
-
-    <div class="form-group">
-        <label for="mail">Электронная почта</label>
-        <input class="mail" type="email" id="mail" name="email" required>
-    </div>
-    <div class="form-group">
-        <label for="password">Пароль</label>
-        <input class="mail" type="password" id="password" name="password" required>
-    </div>
-    <button type="submit" class="btn">Войти</button>
-</form>
-{% else %}
 
 
 <div class="progress fade">
@@ -33,7 +13,11 @@
 
  <h1>Список объектов</h1>
  <h1>Количество сообщений: {{ messages_count }}</h1>
+<div class="messages_str">
 
+    {{ messages }}
+
+</div>
     <table border="1">
         <thead>
             <tr>
@@ -44,7 +28,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for message in messages %}
+            {% for message in messages_in_db %}
                 <tr>
                     <td>{{ message.title }}</td>
                     <td>{{ message.text }}</td> <!-- Предполагаем, что у объекта есть поле name -->
@@ -58,6 +42,9 @@
             {% endfor %}
         </tbody>
     </table>
-{% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'js/app.js' %}"></script>
 {% endblock %}

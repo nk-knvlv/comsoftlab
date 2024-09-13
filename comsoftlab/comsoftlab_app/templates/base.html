@@ -6,7 +6,6 @@
     <title>{% block title %}Мой сайт{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <script src="{% static 'js/app.js' %}"></script>
 
 </head>
 <body>
@@ -25,5 +24,8 @@
 <footer>
     <p>&copy; 2024 KNVLV</p>
 </footer>
+{% block extra_js %}
+<!-- Подключение дополнительных скриптов (если нужно) -->
+{% endblock %}
 </body>
 </html>
