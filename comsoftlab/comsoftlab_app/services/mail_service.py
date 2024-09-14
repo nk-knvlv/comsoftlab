@@ -2,7 +2,7 @@ import imaplib
 import email
 from ..models import Mail
 from asyncio import sleep
-from ..consumers import YourConsumer as consumer
+from ..consumers import WSConsumer as consumer
 from email.header import decode_header
 import base64
 from bs4 import BeautifulSoup

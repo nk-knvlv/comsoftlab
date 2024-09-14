@@ -43,40 +43,8 @@ def mail(request, is_credentials_valid='True'):
     return render(request, 'mail.html', context)
 
 
-# Проверяет mail credentials,
-# если все в порядке, проверяет есть ли эта почта в бд
-# если нет добавляет новую почту
-# и перенаправляет на страницу с ее сообщениями
-def init_mail(request):
-    email = request.POST.get('email')
-    password = request.POST.get('password')
-    print('init_mail begin')
-    print(f'email {email}')
-    print(f'password {password}')
-
-    if email and password and MailService.is_mail_credentials_valid(email, password):
-        print('init_mail all is right')
-
-        if not Mail.objects.filter(mail=email, password=password).exists():
-            print('init_mail its new')
-
-            mail_data = {
-                'mail': email,
-                'password': make_password(password),
-                'type': MailService.get_imap_server_by_email(email),
-                'last_message_id': None,
-            }
-            MailService.add_new_mail(mail_data)
-        print('init_mail inside')
-        return messages(request)
-    else:
-        return render(request, 'mail.html',
-                      {'is_credentials_valid': 'False'})  # перенаправление после успешного входа
-
-
 @login_required
 def messages(request):
-    print('messages begin')
     email = request.POST.get('email')
     password = request.POST.get('password')
 
@@ -84,8 +52,26 @@ def messages(request):
         'email': email
     }
 
-    if Mail.objects.filter(mail=email, password=password).exists():
-        stored_messages = Message.objects.all()
-        context['stored_messages'] = stored_messages
+    print(email)
+    print(password)
+    print(MailService.is_mail_credentials_valid(email, password))
 
-    return render(request, 'messages.html', context)
+    if email and password and MailService.is_mail_credentials_valid(email, password):
+
+        if not Mail.objects.filter(mail=email, password=password).exists():
+            mail_data = {
+                'mail': email,
+                'password': password,
+                'type': MailService.get_imap_server_by_email(email),
+                'last_message_id': None,
+            }
+            MailService.add_new_mail(mail_data)
+
+        if Mail.objects.filter(mail=email, password=password).exists():
+            stored_messages = Message.objects.all()
+            context['stored_messages'] = stored_messages
+
+        return render(request, 'messages.html', context)
+    else:
+        return render(request, 'mail.html',
+                      {'is_credentials_valid': 'False'})  # перенаправление после успешного входаx

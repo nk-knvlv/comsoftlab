@@ -4,10 +4,10 @@
 
 {% block content %}
 
-<form method="post" action="/comsoftlab_app/mail/init_mail/" id="login-form">
+<form method="post" action="/comsoftlab_app/mail/messages/" id="login-form">
     {% csrf_token %}
 
-    {% if is_credentials_valid == 'True' %}
+    {% if is_credentials_valid == 'False' %}
         <div class="wrong-credentials">
             Неверные данные почты
         </div>
