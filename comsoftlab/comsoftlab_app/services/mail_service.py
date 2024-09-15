@@ -2,14 +2,14 @@ import imaplib
 import email
 from ..models import Mail
 from asyncio import sleep
-from ..consumers import WSConsumer as consumer
+from ..consumers import WSConsumer
 from email.header import decode_header
 import base64
 from bs4 import BeautifulSoup
 import re
 
 
-class MailService:
+class MailBox:
     imap: object
 
     def __init__(self, settings):
@@ -28,8 +28,8 @@ class MailService:
         return mail_type
 
     @staticmethod
-    def is_mail_credentials_valid(mail, password):
-        imap_server = MailService.get_imap_server_by_email(mail)
+    def is_credentials_valid(mail, password):
+        imap_server = MailBox.get_imap_server_by_email(mail)
         try:
             imaplib.IMAP4_SSL(imap_server).login(mail, password)
             return True
@@ -45,9 +45,23 @@ class MailService:
             print(f"Произошла ошибка: {e}")
             raise MailServiceException('Wrong credentials man:)')
 
+
+    async def get_messages_uid_list(self):
+        status, messages = self.imap.uid('search', "ALL")
+        if status == 'OK':
+            return messages 
+        else:
+            return False
+
     async def start_messages_receiving(self):
-        # status, messages = self.imap.uid('search', "ALL")
-        new_cons = consumer()
+        uid_list = get_messages_uids_list()[1]
+        for uid in uid_list:
+            byte_uid = bytes(str(uid), 'utf-8')  # Преобразование строки в байтовый формат
+
+            res, msg = imap.uid('fetch', byte_uid, '(RFC822)')  # Для метода uid
+
+
+        new_cons = WSConsumer()
         for el in range(10):
             await sleep(5)
             print('send')

@@ -12,17 +12,6 @@ class Mail(models.Model):
     def __str__(self):
         return self.mail
 
-    @staticmethod
-    def get_mail_password(mail):
-        try:
-            # Получаем объект модели Mail по полю mail
-            mail_obj = Mail.objects.get(mail=mail)
-            password = mail_obj.password
-            return password
-        except Mail.DoesNotExist:
-            # Обработка случая, когда запись с указанным полем mail не найдена
-            return None
-
 
 class Message(models.Model):
     id = models.AutoField(primary_key=True)

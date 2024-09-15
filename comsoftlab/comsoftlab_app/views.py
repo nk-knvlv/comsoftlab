@@ -7,7 +7,7 @@ from asyncio import create_task
 from django.http import HttpRequest
 from .models import Message, Mail
 from django.conf import settings
-from .services.mail_service import MailService, MailServiceException
+from .services.mail_service import MailBox, MailServiceException
 
 
 def register(request):
@@ -54,18 +54,18 @@ def messages(request):
 
     print(email)
     print(password)
-    print(MailService.is_mail_credentials_valid(email, password))
+    print(MailBox.is_credentials_valid(email, password))
 
-    if email and password and MailService.is_mail_credentials_valid(email, password):
+    if email and password and MailBox.is_credentials_valid(email, password):
 
         if not Mail.objects.filter(mail=email, password=password).exists():
             mail_data = {
                 'mail': email,
                 'password': password,
-                'type': MailService.get_imap_server_by_email(email),
+                'type': MailBox.get_imap_server_by_email(email),
                 'last_message_id': None,
             }
-            MailService.add_new_mail(mail_data)
+            MailBox.add_new_mail(mail_data)
 
         if Mail.objects.filter(mail=email, password=password).exists():
             stored_messages = Message.objects.all()
