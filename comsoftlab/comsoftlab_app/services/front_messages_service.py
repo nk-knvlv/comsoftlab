@@ -1,26 +1,16 @@
+from asgiref.sync import sync_to_async
 from asyncio import sleep, get_event_loop
+from .mail_service import MailBox
 
 
 class FrontMessagesService:
 
-    def work(self):
-        pass
-
-
     @staticmethod
     async def process_message(message, ws):
-        loop = get_event_loop()
-        match message:
-            case message if message == 1:
-                for el in range(10):
-                    await sleep(5)
-                    print('send')
-                    await ws.websocket_send(text_data=str(el))
-                # mail_service_settings = {
-                #     'mail': email,
-                #     'mail_pass': password,
-                #     'imap_server': MailService.get_imap_server_by_email(email),
-                # }
-                #
-                # mail_service = MailService(mail_service_settings)
-                # mail_service.start_messages_receiving()
+        message_type = message['messageType']
+        mail = message['mail']
+        match message_type:
+            case message_type if message_type == 1:
+                mailbox = MailBox(mail)
+                await mailbox.async_init()
+                await mailbox.get_new_messages(ws, mail)

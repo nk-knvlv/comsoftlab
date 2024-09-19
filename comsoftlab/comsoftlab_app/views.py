@@ -70,7 +70,11 @@ def messages(request):
         if Mail.objects.filter(mail=email, password=password).exists():
             stored_messages = Message.objects.all()
             context['stored_messages'] = stored_messages
-
+        # last_message = Message.objects.filter(mail=email).latest()
+        mail_obj = Mail.objects.get(mail=email)
+        password = mail_obj.password
+        context['password'] = password
+        # context['last_message'] = last_message
         return render(request, 'messages.html', context)
     else:
         return render(request, 'mail.html',

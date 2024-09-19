@@ -19,7 +19,7 @@ class Message(models.Model):
     text = models.TextField(blank=False)
     sent_date = models.DateTimeField(blank=False)
     receiving_date = models.DateTimeField(null=True, blank=True)  # Дата получения может не быть
-    external_id = models.IntegerField(unique=True)  # Уникальный идентификатор сообщения
+    uid = models.IntegerField(unique=True)  # Уникальный идентификатор сообщения
     mail = models.ForeignKey(Mail, related_name='messages', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
