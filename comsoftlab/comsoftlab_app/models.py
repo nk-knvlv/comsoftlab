@@ -15,11 +15,12 @@ class Mail(models.Model):
 
 class Message(models.Model):
     id = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=255, blank=False)
-    text = models.TextField(blank=False)
+    uid = models.IntegerField(unique=True)  # Уникальный идентификатор сообщения
+    subject = models.CharField(max_length=255, blank=False)
+    content = models.TextField(blank=False)
     sent_date = models.DateTimeField(blank=False)
     receiving_date = models.DateTimeField(null=True, blank=True)  # Дата получения может не быть
-    uid = models.IntegerField(unique=True)  # Уникальный идентификатор сообщения
+    attached_file_link_list = models.JSONField(default=list)
     mail = models.ForeignKey(Mail, related_name='messages', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):

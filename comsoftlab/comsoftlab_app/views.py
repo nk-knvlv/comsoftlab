@@ -68,7 +68,7 @@ def messages(request):
             MailBox.add_new_mail(mail_data)
 
         if Mail.objects.filter(mail=email, password=password).exists():
-            stored_messages = Message.objects.all()
+            stored_messages = Message.objects.all()[:30]
             context['stored_messages'] = stored_messages
         # last_message = Message.objects.filter(mail=email).latest()
         mail_obj = Mail.objects.get(mail=email)

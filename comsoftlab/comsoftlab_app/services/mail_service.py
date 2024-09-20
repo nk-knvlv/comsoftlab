@@ -2,13 +2,22 @@ import imaplib
 import email
 from ..models import Mail, Message
 from asgiref.sync import sync_to_async
+import datetime
 from django.db import models
 import bisect
 from asyncio import sleep
 import base64
 from email.header import decode_header
 from bs4 import BeautifulSoup
+import chardet
 import re
+
+
+class MailServiceException(Exception):
+
+    def __init__(self, message, code=None):
+        super().__init__(message)
+        self.code = code
 
 
 class MailBox:
@@ -34,16 +43,11 @@ class MailBox:
 
     @staticmethod
     async def _get_mail_pass(mail):
-        print('_get_mail_pass')
         try:
-            print('пиздец')
-            print(mail)
             mail_obj = await sync_to_async(lambda: Mail.objects.filter(mail=mail).first())()
             password = mail_obj.password
-            print('это мыло', mail)
             return password
         except Message.DoesNotExist:
-            print('нету')
             return None
 
     @staticmethod
@@ -88,7 +92,7 @@ class MailBox:
             'message_type': 3,
             'search_area': search_area,
         }
-
+        await sleep(2)
         if not last_stored:
             data['message_type'] = 2
             await ws.websocket_send(data)
@@ -99,8 +103,6 @@ class MailBox:
         # двоичный поиск для оптимизации
         while low < high:
             mid = (low + high) // 2
-            print('mid', mid)
-            print('uid_list[mid]', uid_list[mid])
             if uid_list[mid] <= last_stored:
                 data['search_area'][0] = mid + 1
                 low = mid + 1
@@ -108,55 +110,18 @@ class MailBox:
                 data['search_area'][1] = mid
                 high = mid
 
+            data['message_type'] = 4
             await ws.websocket_send(data)
-
+            await sleep(2)
         # После завершения цикла low указывает на первый элемент, который больше last_stored_message_uid
         result_uid = uid_list[low] if low < len(uid_list) else None
-        data['message_type'] = 4
+        data['message_type'] = 5
+        del data['search_area']
         data['result_uid'] = result_uid
 
         await ws.websocket_send(data)
 
-        return result_uid
-
-    async def get_new_messages(self, ws, mail):
-        # 1 получаем из бд uid последнего сохраненного сообщения
-        try:
-            mail_obj = await sync_to_async(lambda: Mail.objects.filter(mail=mail).first())()
-            mail_id = mail_obj.id
-            last_message = await sync_to_async(lambda: Message.objects.filter(mail_id=mail_id).latest('id'))()
-            last_message_uid = last_message.uid  # Получаем значение поля uid
-        except Message.DoesNotExist:
-            last_message_uid = None  # Или выполнить другую логику, например, вернуть сообщение об ошибке
-        # 2 далее получаем список uid и определяем индекс первого неполученного сообщения,
-        uid_list = await self.get_unstored_messages_uid_list(ws, last_message_uid)
-
-        # при каждой проверке отправляем это на фронт для визуализации
-        # в конце мы должны получить массив неполученных сообщений
-        # в котором первый uid будет следующим за последним полученным и до конца
-
-        # далее после
-        # await MailBox.get_message_receiver()
-
-        # получение новых сообщений
-
-        # далее создаем генератор, который будет получать
-        # message отправлять его на фронт и в бд (пока по одному далее по 5)
-        # когда генератор подходит к концу он еще раз запращивает uids, вдруг есть какие-то новые,
-        # если новых нет отправляет сигнал конца
-
-        # тут я должен знать email типа и проследить я это должен от вызова
-        last_stored_message_uid = '227'
-        # uid_list = self.get_messages_uid_list()
-        # чтобы получить пароль
-        # Mail.objects.filter(mail=email)
-
-    #
-    # async def get_message_receiver(self):
-    #     for uid in uid_list:
-    #         byte_uid = bytes(str(uid), 'utf-8')  # Преобразование строки в байтовый формат
-    #
-    #         res, msg = self.imap.uid('fetch', byte_uid, '(RFC822)')  # Для метода uid
+        return uid_list[low:]
 
     def get_mails_count(self) -> int:
         status, messages = self.imap.select("INBOX")
@@ -170,9 +135,88 @@ class MailBox:
         new_mail.save()  # Сохранение объекта в БД
         return new_mail.id
 
+    @staticmethod
+    async def save_message_into_db(mail, message) -> int:
+        new_message = Message(
+            uid=message['uid'],
+            subject=message['subject'],
+            content=message['content'],
+            sent_date=datetime.datetime(*message['sent_date'][:6]),
+            receiving_date=datetime.datetime(*message['receive_date'][:6]),
+            attached_file_link_list=message['attached_file_link_list'],
+            mail=mail,
+        )
+        await sync_to_async(lambda: new_message.save())()  # Сохранение объекта в БД
+        return new_message.id
 
-class MailServiceException(Exception):
+    async def get_new_messages(self, ws, mail):
+        # 1 получаем из бд uid последнего сохраненного сообщения
+        mail_obj = await sync_to_async(lambda: Mail.objects.filter(mail=mail).first())()
+        mail_id = mail_obj.id
+        try:
+            last_message = await sync_to_async(lambda: Message.objects.filter(mail_id=mail_id).latest('id'))()
+            last_message_uid = last_message.uid  # Получаем значение поля uid
+        except Message.DoesNotExist:
+            last_message_uid = None  # Или выполнить другую логику, например, вернуть сообщение об ошибке
+        # 2 далее получаем список uid и определяем индекс первого неполученного сообщения,
+        unstored_uid_list = await self.get_unstored_messages_uid_list(ws, last_message_uid)
 
-    def __init__(self, message, code=None):
-        super().__init__(message)
-        self.code = code
+        # при каждой проверке отправляем это на фронт для визуализации
+        # в конце мы должны получить массив неполученных сообщений
+        # в котором первый uid будет следующим за последним полученным и до конца
+
+        counter = 0
+        for uid in unstored_uid_list:
+            message = self.get_message(uid)
+            await self.save_message_into_db(mail_obj, message)
+            data = {
+                'message_type': 6,
+                'message': message
+            }
+            await ws.websocket_send(data)
+            counter += 1
+            if counter > 10:
+                break
+
+    def get_message(self, uid):
+        res, msg_obj = self.imap.uid('fetch', str(uid).encode('utf-8'), '(RFC822)')
+        msg_obj = email.message_from_bytes(msg_obj[0][1])
+        # letter_id = msg_obj["Message-ID"]  # айди письма
+        sent_date = email.utils.parsedate_tz(msg_obj["Date"])  # дата получения, приходит >
+        receive_date = email.utils.parsedate_tz(msg_obj["Date"]) # дата получения, приходит >
+
+        letter_from = msg_obj["Return-path"]  # e-mail отправителя
+        # Объединение и декодирование всех частей
+        decoded_subject = ''
+        subject_parts = decode_header(msg_obj["Subject"])
+        for part, encoding in subject_parts:
+            if isinstance(part, bytes):
+                # Декодируем строку, если это байты
+                if encoding is not None:
+                    decoded_subject += part.decode(encoding, errors='replace')
+                else:
+                    decoded_subject += part.decode('utf-8', errors='replace')  # или другой подходящий
+            else:
+                # Если это уже строка, просто добавляем её
+                decoded_subject += part
+
+        payload = msg_obj.get_payload()
+
+        # for part in msg.walk():
+        #   if part.get_content_maintype() == 'text' and part.get_content_subtype() == >
+        #      payload =
+        #       print(base64.b64decode(part.get_payload()).decode())
+        fake_links = [
+            "https://www.example1.com",
+            "https://www.example2.com"
+        ]
+        message = {
+            'uid': uid,
+            'subject': decoded_subject,
+            'sent_date': sent_date,
+            'receive_date': receive_date,
+            'letter_from': letter_from,
+            'content': 'а тебя это ебать не должно',
+            'attached_file_link_list': fake_links
+        }
+        return message

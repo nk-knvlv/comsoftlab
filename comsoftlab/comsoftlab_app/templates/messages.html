@@ -6,65 +6,64 @@
 
 {% block content %}
 
-<div class="mail">
-    {{ email }}
-</div>
 
 <div class="mail">
     {{ email }}
 </div>
 
 <br>
+<div class="progress-bar__container">
+    <span class="progress-bar__text">Uploaded Successfully!</span>
+    <div class="progress-bar-begin-path">
+    </div>
+        <div class="progress-bar progress-bar-middle-path">
+    </div>
 
-<div class="mail">
-    {{ password }}
-</div>
-<br>
-<div class="progress fade">
-    <div class="progress-value"></div>
+        <div class="progress-bar-end-path">
+    </div>
+
 </div>
 
 <p>Список объектов:
-    <div class="message_count"></div>
+<div class="message_count"></div>
 <p>
 <h1>Количество сообщений: {{ messages_count }}</h1>
-<table border="1">
-    <thead>
-    <tr>
-        <th>Тема</th>
-        <th>Содержание</th>
-        <th>Дана отправки</th>
-        <th>Дана получения</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for message in messages %}
-    <tr>
-        <td>{{ message.title }}</td>
-        <td>{{ message.text }}</td> <!-- Предполагаем, что у объекта есть поле name -->
-        <td>{{ message.sent_date }}</td> <!-- Другие поля -->
-        <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="3">Нет объектов для отображения.</td>
-    </tr>
-    {% endfor %}
+<div class="table-wrapper">
+    <table border="1">
+        <thead>
+        <tr>
+            <th>Тема</th>
+            <th>Содержание</th>
+            <th>Дана отправки</th>
+            <th>Дана получения</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for message in messages %}
+        <tr>
+            <td>{{ message.title }}</td>
+            <td>{{ message.text }}</td> <!-- Предполагаем, что у объекта есть поле name -->
+            <td>{{ message.sent_date }}</td> <!-- Другие поля -->
+            <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
+        </tr>
+        {% endfor %}
 
-    {% for message in stored_messages %}
-    <tr>
-        <td>{{ message.title }}</td>
-        <td>{{ message.text }}</td> <!-- Предполагаем, что у объекта есть поле name -->
-        <td>{{ message.sent_date }}</td> <!-- Другие поля -->
-        <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="3">Нет объектов для отображения.</td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        {% for message in stored_messages %}
+        <tr>
+            <td>{{ message.subject }}</td>
+            <td>{{ message.content }}</td> <!-- Предполагаем, что у объекта есть поле name -->
+            <td>{{ message.sent_date }}</td> <!-- Другие поля -->
+            <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Нет объектов для отображения.</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
 
 {% endblock %}
 

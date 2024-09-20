@@ -53,7 +53,7 @@ body {
   justify-content: center;
   align-items: center;
   background: #1c1a1a;
-  height: 100vh;
+  height: 100%;
   display: flex;
   padding: 20px;
   margin: 0;
@@ -64,29 +64,44 @@ body {
   background-image: url("https://cdn.prod.website-files.com/6674f0cdb5b7b401612cf015/6674f0cdb5b7b401612cf065_noise-50.avif");
 }
 
-.progress {
-  -webkit-box-reflect: below 0px linear-gradient(to bottom, rgba(0,0,0,0.0), rgba(0,0,0,0.15));
-  background: rgba(255,255,255,0.1);
-  justify-content: flex-start;
-  border-radius: 100px;
-  align-items: center;
-  position: relative;
-  padding: 0 5px;
-  display: flex;
-  height: 40px;
-  width: 500px;
-  margin: 0 auto 30px;
+
+.progress-bar__container {
+    display: flex;
+    width: 90%;
+    height: 2rem;
+    border-radius: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s;
+    will-change: transform;
+    box-shadow: 0 0 5px #e76f51;
+    margin: 0 auto;
 }
 
-.progress-value {
-  transition-duration: 1s;
-  box-shadow: 0 10px 40px -10px #fff;
-  border-radius: 100px;
-  background: #fff;
-  height: 30px;
-  width: 0;
+.progress-bar {
+    flex-grow: 100;
+    position: relative;
+    height: 100%;
+    background-color: #e76f51;
+    border-radius: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: sans-serif;
+    transition-duration: 1s;
 }
 
+.progress-bar__text {
+  display: none;
+  position:absolute
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-y: auto; /* Включите вертикальный скроллинг */
+    max-height: 250px;
+}
 
 
 .fade {
