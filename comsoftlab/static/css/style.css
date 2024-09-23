@@ -6,6 +6,14 @@
     width: 300px;
 }
 
+main{
+    width: 100%;
+}
+
+table{
+    width: 100%
+}
+
 h1 {
     text-align: center;
 }
@@ -68,28 +76,35 @@ body {
 .progress-bar__container {
     display: flex;
     width: 90%;
-    height: 2rem;
+    height: 1rem;
     border-radius: 2rem;
     position: relative;
     overflow: hidden;
     transition: all 0.5s;
     will-change: transform;
-    box-shadow: 0 0 5px #e76f51;
+    box-shadow: 0 0 5px #fff;
     margin: 0 auto;
+}
+
+.progress-bar-begin-path{
+    background-color: #7b906e;
+}
+
+.progress-bar-end-path{
+    background-color: #fff;
 }
 
 .progress-bar {
     flex-grow: 100;
     position: relative;
     height: 100%;
-    background-color: #e76f51;
-    border-radius: inherit;
+    background-color: #c76363;
     display: flex;
     justify-content: center;
     align-items: center;
     color: white;
     font-family: sans-serif;
-    transition-duration: 1s;
+    transition-duration: 0.5s;
 }
 
 .progress-bar__text {

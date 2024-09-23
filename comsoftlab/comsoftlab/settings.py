@@ -130,9 +130,3 @@ CHANNELS_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
-
-MAIL_SERVICE_CONF = {
-    'mail_pass': "MPenUT0nfBBfsduvzvHB",
-    'imap_server': 'imap.mail.ru',
-}
-

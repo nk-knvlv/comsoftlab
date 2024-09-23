@@ -24,18 +24,19 @@
 
 </div>
 
-<p>Список объектов:
+<p>mail checks:
 <div class="message_count"></div>
 <p>
-<h1>Количество сообщений: {{ messages_count }}</h1>
+<h1>сообщения: {{ messages_count }}</h1>
 <div class="table-wrapper">
-    <table border="1">
+    <table class="message-table" border="1">
         <thead>
         <tr>
             <th>Тема</th>
             <th>Содержание</th>
             <th>Дана отправки</th>
             <th>Дана получения</th>
+            <th>Прикрепленные файлы</th>
         </tr>
         </thead>
         <tbody>
@@ -45,6 +46,7 @@
             <td>{{ message.text }}</td> <!-- Предполагаем, что у объекта есть поле name -->
             <td>{{ message.sent_date }}</td> <!-- Другие поля -->
             <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
+            <td>{{ message.attached_file_link_list }}</td>
         </tr>
         {% endfor %}
 
@@ -54,10 +56,11 @@
             <td>{{ message.content }}</td> <!-- Предполагаем, что у объекта есть поле name -->
             <td>{{ message.sent_date }}</td> <!-- Другие поля -->
             <td>{{ message.receiving_date }}</td> <!-- Другие поля -->
+            <td>{{ message.attached_file_link_list }}</td> <!-- Другие поля -->
         </tr>
         {% empty %}
         <tr>
-            <td colspan="3">Нет объектов для отображения.</td>
+            <td class="no-objects" colspan="5">Нет объектов для отображения.</td>
         </tr>
         {% endfor %}
         </tbody>

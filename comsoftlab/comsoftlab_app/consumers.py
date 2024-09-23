@@ -1,10 +1,6 @@
 from channels.consumer import AsyncConsumer
 from .services.front_messages_service import FrontMessagesService
 import json
-from random import randint
-from asyncio import sleep
-from .models import Mail
-from .services import front_messages_service
 
 
 class WSConsumer(AsyncConsumer):

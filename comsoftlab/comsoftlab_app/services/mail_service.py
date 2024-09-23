@@ -3,14 +3,11 @@ import email
 from ..models import Mail, Message
 from asgiref.sync import sync_to_async
 import datetime
-from django.db import models
-import bisect
+import quopri
 from asyncio import sleep
 import base64
 from email.header import decode_header
 from bs4 import BeautifulSoup
-import chardet
-import re
 
 
 class MailServiceException(Exception):
@@ -93,12 +90,13 @@ class MailBox:
             'search_area': search_area,
         }
         await sleep(2)
+        # await sleep(2)
         if not last_stored:
             data['message_type'] = 2
             await ws.websocket_send(data)
             return uid_list
-
-        await ws.websocket_send(data)
+        else:
+            await ws.websocket_send(data)
 
         # двоичный поиск для оптимизации
         while low < high:
@@ -112,7 +110,7 @@ class MailBox:
 
             data['message_type'] = 4
             await ws.websocket_send(data)
-            await sleep(2)
+            # await sleep(2)
         # После завершения цикла low указывает на первый элемент, который больше last_stored_message_uid
         result_uid = uid_list[low] if low < len(uid_list) else None
         data['message_type'] = 5
@@ -160,7 +158,7 @@ class MailBox:
             last_message_uid = None  # Или выполнить другую логику, например, вернуть сообщение об ошибке
         # 2 далее получаем список uid и определяем индекс первого неполученного сообщения,
         unstored_uid_list = await self.get_unstored_messages_uid_list(ws, last_message_uid)
-
+        await sleep(2)
         # при каждой проверке отправляем это на фронт для визуализации
         # в конце мы должны получить массив неполученных сообщений
         # в котором первый uid будет следующим за последним полученным и до конца
@@ -175,20 +173,19 @@ class MailBox:
             }
             await ws.websocket_send(data)
             counter += 1
-            if counter > 10:
-                break
 
     def get_message(self, uid):
         res, msg_obj = self.imap.uid('fetch', str(uid).encode('utf-8'), '(RFC822)')
         msg_obj = email.message_from_bytes(msg_obj[0][1])
         # letter_id = msg_obj["Message-ID"]  # айди письма
         sent_date = email.utils.parsedate_tz(msg_obj["Date"])  # дата получения, приходит >
-        receive_date = email.utils.parsedate_tz(msg_obj["Date"]) # дата получения, приходит >
+        receive_date = email.utils.parsedate_tz(msg_obj["Date"])  # дата получения, приходит >
 
         letter_from = msg_obj["Return-path"]  # e-mail отправителя
         # Объединение и декодирование всех частей
-        decoded_subject = ''
         subject_parts = decode_header(msg_obj["Subject"])
+        links = self.get_attachment(msg_obj)
+        decoded_subject = ''
         for part, encoding in subject_parts:
             if isinstance(part, bytes):
                 # Декодируем строку, если это байты
@@ -200,23 +197,93 @@ class MailBox:
                 # Если это уже строка, просто добавляем её
                 decoded_subject += part
 
-        payload = msg_obj.get_payload()
-
-        # for part in msg.walk():
-        #   if part.get_content_maintype() == 'text' and part.get_content_subtype() == >
-        #      payload =
-        #       print(base64.b64decode(part.get_payload()).decode())
-        fake_links = [
-            "https://www.example1.com",
-            "https://www.example2.com"
-        ]
+        content = self.get_letter_text(msg_obj)
         message = {
             'uid': uid,
             'subject': decoded_subject,
             'sent_date': sent_date,
             'receive_date': receive_date,
             'letter_from': letter_from,
-            'content': 'а тебя это ебать не должно',
-            'attached_file_link_list': fake_links
+            'content': content,
+            'attached_file_link_list': links
         }
         return message
+
+    def get_letter_text(self, msg):
+        str_count = 0
+        if msg.is_multipart():
+            for part in msg.walk():
+                if str_count > 5:
+                    break
+                str_count += 1
+                count = 0
+                if part.get_content_maintype() == "text" and count == 0:
+                    extract_part = self.letter_type(part)
+                    if part.get_content_subtype() == "html":
+                        letter_text = self.get_letter_text_from_html(extract_part)
+                    else:
+                        letter_text = extract_part.rstrip().lstrip()
+                    count += 1
+                    return (
+                        letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
+                    )
+        else:
+            count = 0
+            if msg.get_content_maintype() == "text" and count == 0:
+                extract_part = self.letter_type(msg)
+                if msg.get_content_subtype() == "html":
+                    letter_text = self.get_letter_text_from_html(extract_part)
+                else:
+                    letter_text = extract_part
+                count += 1
+                return letter_text.replace("<", "").replace(">", "").replace("\xa0", " ")
+
+    @staticmethod
+    def letter_type(part):
+        if part["Content-Transfer-Encoding"] in (None, "7bit", "8bit", "binary"):
+            return part.get_payload()
+        elif part["Content-Transfer-Encoding"] == "base64":
+            encoding = part.get_content_charset()
+            return base64.b64decode(part.get_payload()).decode(encoding)
+        elif part["Content-Transfer-Encoding"] == "quoted-printable":
+            encoding = part.get_content_charset()
+            return quopri.decodestring(part.get_payload()).decode(encoding)
+        else:  # all possible types: quoted-printable, base64, 7bit, 8bit, and binary
+            return part.get_payload()
+
+    @staticmethod
+    def get_letter_text_from_html(body):
+        body = body.replace("<div><div>", "<div>").replace("</div></div>", "</div>")
+        try:
+            soup = BeautifulSoup(body, "html.parser")
+            paragraphs = soup.find_all("div")
+            text = ""
+            for paragraph in paragraphs:
+                text += paragraph.text + "\n"
+            return text.replace("\xa0", " ")
+        except (Exception) as exp:
+            print("text ftom html err ", exp)
+            return False
+
+    def get_attachment(self, msg):
+        attachments_links = []
+        for part in msg.walk():
+            if part.get_content_disposition() == "attachment":
+                filename = part.get_filename()
+                filename = self.from_subj_decode(filename)
+                attachments_links.append(filename)
+        return attachments_links
+
+    @staticmethod
+    def from_subj_decode(msg_from_subj):
+        if msg_from_subj:
+            encoding = decode_header(msg_from_subj)[0][1]
+            msg_from_subj = decode_header(msg_from_subj)[0][0]
+            if isinstance(msg_from_subj, bytes):
+                msg_from_subj = msg_from_subj.decode(encoding)
+            if isinstance(msg_from_subj, str):
+                pass
+            msg_from_subj = str(msg_from_subj).strip("<>").replace("<", "")
+            return msg_from_subj
+        else:
+            return None

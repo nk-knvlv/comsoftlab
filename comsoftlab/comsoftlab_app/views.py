@@ -2,12 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.hashers import make_password, check_password
-from asyncio import create_task
-from django.http import HttpRequest
 from .models import Message, Mail
-from django.conf import settings
-from .services.mail_service import MailBox, MailServiceException
+from .services.mail_service import MailBox
 
 
 def register(request):
@@ -52,10 +48,6 @@ def messages(request):
         'email': email
     }
 
-    print(email)
-    print(password)
-    print(MailBox.is_credentials_valid(email, password))
-
     if email and password and MailBox.is_credentials_valid(email, password):
 
         if not Mail.objects.filter(mail=email, password=password).exists():
@@ -68,7 +60,7 @@ def messages(request):
             MailBox.add_new_mail(mail_data)
 
         if Mail.objects.filter(mail=email, password=password).exists():
-            stored_messages = Message.objects.all()[:30]
+            stored_messages = Message.objects.all()
             context['stored_messages'] = stored_messages
         # last_message = Message.objects.filter(mail=email).latest()
         mail_obj = Mail.objects.get(mail=email)
